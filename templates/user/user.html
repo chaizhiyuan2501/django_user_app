@@ -1,0 +1,6 @@
+{% extends "base.html "%}
+{% block title %}ユーザー情報 | {{ APP_TITLE }}{% endblock %}
+{% block content %}
+<h2>ユーザー名:{{ user.name }}</h2>
+<h2>メールアドレス:{{ user.email }}</h2>
+{% endblock %}
