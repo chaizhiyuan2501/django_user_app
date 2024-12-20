@@ -6,13 +6,18 @@ from django.views.generic.base import TemplateView, View
 from django.views.generic import FormView
 from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import login, logout,authenticate
+from django.contrib.auth import login, logout, authenticate
 from django.utils.decorators import method_decorator
 from django.shortcuts import resolve_url
 from django.urls import reverse_lazy
 
 from .models import User
-from .forms import UserRegisterForm, UserLoginForm, CustomUpdatePasswordForm
+from .forms import (
+    UserRegisterForm,
+    UserLoginForm,
+    UpdatePasswordForm,
+    UpdateProfileForm,
+)
 
 
 class HomeView(TemplateView):
@@ -60,11 +65,32 @@ class UserLoginView(LoginView):
         return super().form_valid(form)
 
 
-class UpdatePasswordView(PasswordChangeView):
-    """ユーザー更新ビュー"""
+class UserLogoutView(LogoutView):
+    """ユーザーログアウトビュー"""
 
-    template_name = "user/update.html"
-    form_class = CustomUpdatePasswordForm
+    next_page = "/"
+    success_message = "ログアウトしました｡"
+
+    def dispatch(self, request,*args,**kwargs):
+        response = super().dispatch(request,*args,**kwargs)
+        messages.info(self.request, self.success_message)
+        return response
+
+
+class UserView(LoginRequiredMixin, TemplateView):
+    """ユーザービュー"""
+
+    template_name = "user/user.html"
+
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+
+class UpdatePasswordView(PasswordChangeView):
+    """パスワード更新ビュー"""
+
+    template_name = "user/update/update_password.html"
+    form_class = UpdatePasswordForm
     success_url = reverse_lazy("user:login")
     success_message = "パスワードが更新されたました｡再ログインしてください｡"  # パスワード更新成功メッセージ
 
@@ -75,24 +101,19 @@ class UpdatePasswordView(PasswordChangeView):
         return response
 
 
-class UserLogoutView(LogoutView):
-    """ユーザーログアウトビュー"""
+class UpdateProfileView(UpdateView):
+    """ユーザープロフィール更新ビュー"""
 
-    next_page = "/"
-    success_message = "ログアウトしました｡"
+    model = User
+    template_name = "user/update/update_profile.html"
+    form_class = UpdateProfileForm
+    success_url = reverse_lazy("user:user")
+    success_message = "プロフィールが変更されました｡"
 
     def form_valid(self, form):
         messages.success(self.request, self.success_message)
-        return super().form_valid(form)
-
-
-class UserView(LoginRequiredMixin, TemplateView):
-    """ユーザービュー"""
-
-    template_name = "user/user.html"
-
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
+        response = super().form_valid(form)
+        return response
 
 
 def page_not_found(request, exception):

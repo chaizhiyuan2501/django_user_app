@@ -46,28 +46,9 @@ class UserLoginForm(AuthenticationForm):
     )
 
 
-class UpdateProfileForm(forms.ModelForm):
-    """ユーザープロフィール更新フォーム"""
+class UpdatePasswordForm(PasswordChangeForm):
+    """パスワード更新フォーム"""
 
-    name = forms.CharField(max_length=100, label="ユーザー名")
-
-    class Meta:
-        model = User
-        fields = [
-            "name",
-        ]
-
-
-class CustomUpdatePasswordForm(PasswordChangeForm):
-
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-
-    #     self.fields['old_password'].widget.attrs['class'] = '現在のパスワード'# classの指定
-    #     self.fields['new_password1'].widget.attrs['class'] = '【class名】'
-    #     self.fields['new_password2'].widget.attrs['class'] = '【class名】'
-    #     self.fields['new_password1'].widget.attrs['placeholder'] = '半角英数字８文字以上'# placeholderの指定
-    #     self.fields['new_password2'].widget.attrs['placeholder'] = 'パスワード確認用'
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
@@ -88,3 +69,18 @@ class CustomUpdatePasswordForm(PasswordChangeForm):
         if not any(char.isalpha() for char in new_password):
             raise forms.ValidationError("密码必须包含至少一个字母！")
         return new_password
+
+
+class UpdateProfileForm(forms.ModelForm):
+    """ユーザープロフィール更新フォーム"""
+
+    def save(self, *args, **kwargs):
+        user = super(UpdateProfileForm, self).save(commit=False)
+        user.save()
+        return user
+
+    class Meta:
+        model = User
+        fields = [
+            "name",
+        ]
