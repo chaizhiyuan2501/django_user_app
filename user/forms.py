@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.password_validation import validate_password
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
+from django.contrib.auth import get_user_model, authenticate
 from django.core import validators
 from datetime import datetime
 from .models import User
@@ -14,10 +15,13 @@ def check_password(password):
 class UserRegisterForm(forms.ModelForm):
     """ユーザー登録フォーム"""
 
-    name = forms.CharField(label="名前")
-    email = forms.EmailField(label="メールアドレス")
+    name = forms.CharField(max_length=50, label="ユーザー名")
+    email = forms.EmailField(max_length=150, label="メールアドレス")
     password = forms.CharField(
-        label="パスワード", widget=forms.PasswordInput(), validators=[check_password]
+        min_length=8,
+        label="パスワード",
+        widget=forms.PasswordInput(),
+        validators=[check_password],
     )
 
     def save(self, commit=False):
@@ -35,20 +39,52 @@ class UserRegisterForm(forms.ModelForm):
 class UserLoginForm(AuthenticationForm):
     """ユーザーログインフォーム"""
 
-    email = forms.EmailField(label="メールアドレス")
+    username = forms.EmailField(label="メールアドレス")
     password = forms.CharField(label="パスワード", widget=forms.PasswordInput())
-    rememberMe = forms.BooleanField(label="一定時間自動的にログイン", required=False)
+    rememberMe = forms.BooleanField(
+        label="一定時間自動的にログイン", required=False, initial=False
+    )
 
 
-class UserUpdateForm(forms.ModelForm):
-    """ユーザー更新フォーム"""
+class UpdateProfileForm(forms.ModelForm):
+    """ユーザープロフィール更新フォーム"""
+
+    name = forms.CharField(max_length=100, label="ユーザー名")
 
     class Meta:
         model = User
-        fields = ["name",]
+        fields = [
+            "name",
+        ]
 
-    def save(self, *args, **kwargs):
-        obj = super(UserUpdateForm, self).save(commit=False)
-        # obj.update_at = datetime.now()
-        obj.save()
-        return obj
+
+class CustomUpdatePasswordForm(PasswordChangeForm):
+
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+
+    #     self.fields['old_password'].widget.attrs['class'] = '現在のパスワード'# classの指定
+    #     self.fields['new_password1'].widget.attrs['class'] = '【class名】'
+    #     self.fields['new_password2'].widget.attrs['class'] = '【class名】'
+    #     self.fields['new_password1'].widget.attrs['placeholder'] = '半角英数字８文字以上'# placeholderの指定
+    #     self.fields['new_password2'].widget.attrs['placeholder'] = 'パスワード確認用'
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "class_name"
+            field.widget.attrs["placeholder"] = "パスワード"
+
+        self.fields["old_password"].label = "現在のパスワード"
+        self.fields["new_password1"].label = "新しいパスワードを入力してください"
+        self.fields["new_password2"].label = "新しいパスワードを再入力してください"
+
+    def clean_new_password1(self):
+        # 添加自定义密码验证逻辑
+        new_password = self.cleaned_data.get("new_password1")
+        if len(new_password) < 8:
+            raise forms.ValidationError("密码长度至少为8位！")
+        if not any(char.isdigit() for char in new_password):
+            raise forms.ValidationError("密码必须包含至少一个数字！")
+        if not any(char.isalpha() for char in new_password):
+            raise forms.ValidationError("密码必须包含至少一个字母！")
+        return new_password

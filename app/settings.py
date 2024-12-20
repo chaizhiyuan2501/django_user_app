@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 import os
 from pathlib import Path
+from django.contrib.messages import constants as message_constants
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -138,3 +139,14 @@ APP_TITLE = "ToDoリスト"
 # LOGIN_REDIRECT_URL = '/user/user'   # ログイン後ホームページに遷移する
 # LOGOUT_REDIRECT_URL = '/user/user'  # ログアウト後ホームページに遷移する
 
+# メッセージ格納域
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
+
+# メッセージタグ
+MESSAGE_TAGS = {
+    message_constants.DEBUG: 'debug',
+    message_constants.INFO: 'info',
+    message_constants.SUCCESS: 'success',
+    message_constants.WARNING: 'warning',
+    message_constants.ERROR: 'danger',
+}

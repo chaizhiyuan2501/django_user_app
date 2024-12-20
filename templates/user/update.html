@@ -1,6 +1,11 @@
 {% extends "base.html "%}
 {% block title %}ユーザー情報更新 | {{ APP_TITLE }}{% endblock %}
 {% block content %}
+{% if messages %}
+{% for message in messages %}
+{{ message.message }}
+{% endfor %}
+{% endif %}
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
