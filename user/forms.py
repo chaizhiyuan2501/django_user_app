@@ -74,6 +74,10 @@ class UpdatePasswordForm(PasswordChangeForm):
 class UpdateProfileForm(forms.ModelForm):
     """ユーザープロフィール更新フォーム"""
 
+    name = forms.CharField(max_length=50, label="新しいユーザー名")
+    phone_number = forms.IntegerField(max_value=50, label="新しい携帯番号")
+    avatar = forms.FileField(required=False, label="新しいアバター")
+
     def save(self, *args, **kwargs):
         user = super(UpdateProfileForm, self).save(commit=False)
         user.save()
@@ -83,4 +87,6 @@ class UpdateProfileForm(forms.ModelForm):
         model = User
         fields = [
             "name",
+            "avatar",
+            "phone_number",
         ]

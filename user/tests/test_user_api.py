@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from django.urls import reverse, resolve, reverse_lazy
 from ..models import User
@@ -12,11 +12,17 @@ from user.views import (
 
 CREATE_USER_URL = reverse("user:register")  # ユーザ登録ページのURL
 LOGIN_USER_URL = reverse("user:login")  # ログインページのURL
+LOGOUT_USER_URL = reverse("user:logout")  # ログアウトページのURL
 
 
 def create_user(**params):
     """新しいユーザーを作成する"""
     return get_user_model().objects.create_user(**params)
+
+
+def get_update_password_url(user_id):
+    """ユーザーパスワード更新のurl"""
+    return reverse("user:update_password", kwargs={"pk": user_id})
 
 
 class PublicUserApiTests(TestCase):
@@ -41,7 +47,7 @@ class PublicUserApiTests(TestCase):
         self.assertTrue(user.check_password(params["password"]))
 
     def test_user_with_email_exists_error(self):
-        """電子メールを持つユーザーが存在する場合、フォームエラーが返されます。"""
+        """メールアドレスを持つユーザーが存在する場合、フォームエラーが返されます。"""
         params = {
             "name": "Test Name",
             "email": "test@example.com",
@@ -56,7 +62,9 @@ class PublicUserApiTests(TestCase):
             response=response,
             form="form",
             field="email",
-            errors="この メールアドレス を持った User が既に存在します。",
+            errors=[
+                "この メールアドレス を持った ユーザー が既に存在します。",
+            ],
         )
         # 作成したユーザーのメールアドレスの数は1つだけ
         self.assertEqual(User.objects.filter(email=params["email"]).count(), 1)
@@ -75,13 +83,71 @@ class PublicUserApiTests(TestCase):
             response=response,
             form="form",
             field="password",
-            errors="パスワードの長さは8桁以上入力してください｡",
+            errors=[
+                "パスワードの長さは8桁以上入力してください｡",
+                "この値が少なくとも 8 文字以上であることを確認してください (7 文字になっています)。",
+            ],
         )
         # 作成したユーザーのメールアドレスの数は0
         self.assertEqual(User.objects.filter(email=params["email"]).count(), 0)
 
 
+def test_user_can_login(self):
+    """ユーザーログインテスト"""
+    user = create_user(
+        email="test@example.com",
+        password="testPass123",
+        name="TestName",
+    )
+    response = self.client.post(
+        LOGIN_USER_URL,
+        {
+            "username": "test@example.com",
+            "password": "testPass123",
+        },
+    )
+    self.assertEqual(response.status_code, 302)  # Redirect to dashboard
+    self.assertIn("_auth_user_id", self.client.session)
+
+
 class PrivateUserApiTests(TestCase):
 
     def setUp(self):
-        pass
+        self.user = create_user(
+            email="test@example.com",
+            password="testPass123",
+            name="TestName",
+        )
+        self.client = Client()
+        # self.client.login(email="test@example.com", password="testPass123")
+        self.client.force_login(self.user)
+
+    def test_password_change(self):
+        """パスワード変更テスト"""
+        new_password = "NewPassword123"
+        response = self.client.post(
+            get_update_password_url(self.user.id),
+            {
+                "old_password": "testPass123",
+                "new_password1": new_password,
+                "new_password2": new_password,
+            },
+        )
+
+        # 确保视图返回正确状态码
+        self.assertEqual(response.status_code, 302)
+
+        # 检查表单错误
+        if response.status_code == 200:
+            print(response.context["form"].errors)
+
+        # 验证密码是否已更新
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password(new_password))  # 验证新密码
+
+
+    def test_user_can_logout(self):
+        """ユーザーログアウトテスト"""
+        response = self.client.get(LOGOUT_USER_URL)
+        self.assertEqual(response.status_code, 302)  # Redirect after logout
+        self.assertNotIn("_auth_user_id", self.client.session)

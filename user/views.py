@@ -4,7 +4,12 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.base import TemplateView, View
 from django.views.generic import FormView
-from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
+from django.contrib.auth.views import (
+    LoginView,
+    LogoutView,
+    PasswordChangeView,
+    PasswordChangeDoneView,
+)
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout, authenticate
 from django.utils.decorators import method_decorator
@@ -71,8 +76,8 @@ class UserLogoutView(LogoutView):
     next_page = "/"
     success_message = "ログアウトしました｡"
 
-    def dispatch(self, request,*args,**kwargs):
-        response = super().dispatch(request,*args,**kwargs)
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
         messages.info(self.request, self.success_message)
         return response
 
@@ -86,7 +91,7 @@ class UserView(LoginRequiredMixin, TemplateView):
         return super().dispatch(*args, **kwargs)
 
 
-class UpdatePasswordView(PasswordChangeView):
+class UpdatePasswordView(LoginRequiredMixin,PasswordChangeView):
     """パスワード更新ビュー"""
 
     template_name = "user/update/update_password.html"
@@ -101,7 +106,13 @@ class UpdatePasswordView(PasswordChangeView):
         return response
 
 
-class UpdateProfileView(UpdateView):
+class UpdatePasswordDoneView(PasswordChangeDoneView):
+    """パスワード変更完了ビュー"""
+
+    template_name = "user/login.html"
+
+
+class UpdateProfileView(LoginRequiredMixin,UpdateView):
     """ユーザープロフィール更新ビュー"""
 
     model = User

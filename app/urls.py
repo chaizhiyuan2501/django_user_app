@@ -1,5 +1,7 @@
 from django.contrib import admin
-from django.urls import path,include
+from django.urls import path, include
+from django.conf.urls.static import static
+from django.conf import settings
 from django.http import JsonResponse
 
 # def handle_404(request, exception):
@@ -14,10 +16,9 @@ from django.http import JsonResponse
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("",include("user.urls")),
+    path("", include("user.urls")),
     # path("todo/",include("todo.urls")),
 ]
 
-# handler403 = 'project.urls.handle_403'
-# handler404 = 'project.urls.handle_404'
-# handler500 = 'project.urls.handle_500'
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
