@@ -1,6 +1,8 @@
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from django.urls import reverse, resolve, reverse_lazy
+from django.core.files.uploadedfile import SimpleUploadedFile
+
 from ..models import User
 from user.views import (
     UserLoginView,
@@ -113,10 +115,13 @@ def test_user_can_login(self):
 class PrivateUserApiTests(TestCase):
 
     def setUp(self):
+        self.email = "test@example.com"
+        self.password = "testPass123"
+        self.name = "TestName"
         self.user = create_user(
-            email="test@example.com",
-            password="testPass123",
-            name="TestName",
+            email=self.email,
+            password=self.password,
+            name=self.name,
         )
         self.client = Client()
         # self.client.login(email="test@example.com", password="testPass123")
@@ -125,29 +130,70 @@ class PrivateUserApiTests(TestCase):
     def test_password_change(self):
         """パスワード変更テスト"""
         new_password = "NewPassword123"
-        response = self.client.post(
-            get_update_password_url(self.user.id),
-            {
-                "old_password": "testPass123",
-                "new_password1": new_password,
-                "new_password2": new_password,
-            },
-        )
+        payload = {
+            "old_password": self.password,
+            "new_password1": new_password,
+            "new_password2": new_password,
+        }
+        response = self.client.post(get_update_password_url(self.user.id), payload)
 
         # 确保视图返回正确状态码
         self.assertEqual(response.status_code, 302)
-
-        # 检查表单错误
-        if response.status_code == 200:
-            print(response.context["form"].errors)
 
         # 验证密码是否已更新
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password(new_password))  # 验证新密码
 
+    def test_password_change_incorrect_old_password(self):
+        new_password = "NewPassword123"
+        payload = {
+            "old_password": "wrongPass123",
+            "new_password1": new_password,
+            "new_password2": new_password,
+        }
+        response = self.client.post(get_update_password_url(self.user.id), payload)
+        # 确保视图返回正确状态码
+        self.assertEqual(response.status_code, 200)
+        # self.assertContains(response, "Your old password was entered incorrectly.")
+
+        # 验证密码是否已更新
+        self.user.refresh_from_db()
+        self.assertTrue(
+            self.user.check_password(self.password)
+        )  # パスワードの変更ができなかった
+
+    def test_password_change_password_mismatch(self):
+        """新しいパスワードとパスワード確認が一致しているかテストする"""
+        payload = {
+            "old_password": self.user.password,
+            "new_password1": "NewPass123",
+            "new_password2": "MismatchPass123",
+        }
+        response = self.client.post(get_update_password_url(self.user.id), payload)
+        self.assertEqual(response.status_code, 200)
+        # self.assertContains(response, "The two password fields didn't match") # エラー情報
+        self.user.refresh_from_db()
+        self.assertTrue(
+            self.user.check_password(self.password)
+        )  # パスワードの変更ができなかった
+
+    def test_password_change_password_too_simple(self):
+        """新しいパスワードが簡単すぎる場合のテスト"""
+        payload = {
+            "old_password": self.user.password,
+            "new_password1": "123",
+            "new_password2": "123",
+        }
+        response = self.client.post(get_update_password_url(self.user.id), payload)
+        self.assertEqual(response.status_code, 200)
+        # self.assertContains(response, "This password is too short.") # エラー情報
+        self.user.refresh_from_db()
+        self.assertTrue(
+            self.user.check_password(self.password)
+        )  # パスワードの変更ができなかった
 
     def test_user_can_logout(self):
         """ユーザーログアウトテスト"""
         response = self.client.get(LOGOUT_USER_URL)
-        self.assertEqual(response.status_code, 302)  # Redirect after logout
+        self.assertEqual(response.status_code, 302)  # ログアウト後ダイレクトする
         self.assertNotIn("_auth_user_id", self.client.session)

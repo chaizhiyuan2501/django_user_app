@@ -1,4 +1,8 @@
+import os
 from django.db import models
+from django.db.models import Q
+from django.dispatch import receiver
+from django.db.models.signals import pre_save
 from django.urls import reverse_lazy
 from django.contrib.auth.models import (
     BaseUserManager,
@@ -16,7 +20,7 @@ class UserManager(BaseUserManager):
         user = self.model(
             name=name,
             email=self.normalize_email(email),  # 電子メールを正規化します
-            **extra_fields
+            **extra_fields,
         )
         user.set_password(password)
         user.save(using=self._db)
@@ -27,7 +31,7 @@ class UserManager(BaseUserManager):
             name=name,
             email=self.normalize_email(email),
             password=password,
-            **extra_fields
+            **extra_fields,
         )
         user.is_staff = True
         user.is_superuser = True
@@ -53,13 +57,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         upload_to=GetImagePath("avatar/"),
         null=True,
         blank=True,
+        default="default/default_avatar.jpg",
         verbose_name="アバター",
     )
     phone_number = models.CharField(
         max_length=50,
-        unique=True,
         null=True,
         blank=True,
+        default=None,
         verbose_name="携帯番号",
     )
     is_active = models.BooleanField(default=True)
@@ -77,6 +82,41 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         verbose_name = "ユーザー"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["phone_number"],
+                name="unique_phone_number",
+                condition=~Q(
+                    phone_number=None
+                ),  # 仅在 phone_number 不为空时应用唯一性约束
+            )
+        ]
 
     def __str__(self):
         return self.name
+
+
+@receiver(pre_save, sender=User)
+def auto_delete_old_avatar(sender, instance, **kwargs):
+    """
+    自动删除用户的旧头像。
+    """
+    if instance.pk:  # 确保实例已存在
+        try:
+            old_avatar = User.objects.get(pk=instance.pk).avatar
+        except User.DoesNotExist:
+            return  # 用户不存在时不处理
+
+        new_avatar = instance.avatar
+        if (
+            old_avatar
+            and old_avatar != new_avatar
+            and old_avatar.name != "default/default_avatar.jpg"
+        ):
+            old_avatar_path = old_avatar.path
+            if os.path.isfile(old_avatar_path):
+                try:
+                    os.remove(old_avatar_path)
+                    print(f"旧头像已删除: {old_avatar_path}")
+                except Exception as e:
+                    print(f"删除旧头像失败: {e}")

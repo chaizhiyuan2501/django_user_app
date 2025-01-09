@@ -1,7 +1,6 @@
 from django import forms
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
-from django.contrib.auth import get_user_model, authenticate
 from django.core import validators
 from datetime import datetime
 from .models import User
@@ -26,6 +25,7 @@ class UserRegisterForm(forms.ModelForm):
 
     def save(self, commit=False):
         user = super().save(commit=False)
+        user.create_date = datetime.now()
         validate_password(self.cleaned_data["password"], user)
         user.set_password(self.cleaned_data["password"])
         user.save()
@@ -63,7 +63,7 @@ class UpdatePasswordForm(PasswordChangeForm):
         # 添加自定义密码验证逻辑
         new_password = self.cleaned_data.get("new_password1")
         if len(new_password) < 8:
-            raise forms.ValidationError("密码长度至少为8位！")
+            raise forms.ValidationError("密码长度至少为8位!")
         if not any(char.isdigit() for char in new_password):
             raise forms.ValidationError("密码必须包含至少一个数字！")
         if not any(char.isalpha() for char in new_password):
@@ -74,12 +74,17 @@ class UpdatePasswordForm(PasswordChangeForm):
 class UpdateProfileForm(forms.ModelForm):
     """ユーザープロフィール更新フォーム"""
 
-    name = forms.CharField(max_length=50, label="新しいユーザー名")
-    phone_number = forms.IntegerField(max_value=50, label="新しい携帯番号")
-    avatar = forms.FileField(required=False, label="新しいアバター")
+    name = forms.CharField(max_length=50, required=False, label="ユーザー名")
+    phone_number = forms.CharField(max_length=50, required=False, label="携帯番号")
+    avatar = forms.ImageField(
+        required=False,
+        label="アバター",
+        widget=forms.ClearableFileInput(attrs={"class": "form-control"}),
+    )
 
     def save(self, *args, **kwargs):
         user = super(UpdateProfileForm, self).save(commit=False)
+        user.update_date = datetime.now()
         user.save()
         return user
 

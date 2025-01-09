@@ -1,3 +1,4 @@
+import os
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
@@ -48,7 +49,7 @@ class Model_Tests(TestCase):
         mock_uuid.return_value = "test-uuid"
 
         # テスト対象のインスタンスを生成
-        prefix = "uploads/avatar/"
+        prefix = "media/avatar/"
         instance = None  # モデルインスタンスはテストでは必要ない
         filename = "example.jpg"
 
@@ -61,3 +62,32 @@ class Model_Tests(TestCase):
 
         # アサーション
         self.assertEqual(generated_path, expected_path)
+
+    def test_image_path(self):
+        """GetImagePath クラスの動作をテスト"""
+        get_image_path = GetImagePath("avatar/")
+        file_path = get_image_path(None, "example.jpg")
+        print(f"Generated file path: {file_path}")  # デバッグ用
+
+        # 期待するパスを生成
+        self.assertTrue(file_path.startswith("avatar/"))
+        self.assertTrue(file_path.endswith(".jpg"))
+
+        # 実際のファイルパス
+        full_path = os.path.join("media", file_path)  # MEDIA_ROOT を考慮したフルパス
+
+        # ファイルを仮に作成（通常テスト時に自動作成される）
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        with open(full_path, "w") as f:
+            f.write("dummy data")
+
+        # 確認: ファイルが存在する
+        self.assertTrue(os.path.exists(full_path))
+
+        # テスト後にファイルを削除
+        if os.path.exists(full_path):
+            os.remove(full_path)
+
+        # ディレクトリも空の場合削除
+        if os.path.exists(os.path.dirname(full_path)) and not os.listdir(os.path.dirname(full_path)):
+            os.rmdir(os.path.dirname(full_path))

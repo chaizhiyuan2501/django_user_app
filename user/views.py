@@ -2,8 +2,7 @@ from django.shortcuts import render
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import CreateView, UpdateView
-from django.views.generic.base import TemplateView, View
-from django.views.generic import FormView
+from django.views.generic.base import TemplateView
 from django.contrib.auth.views import (
     LoginView,
     LogoutView,
@@ -12,8 +11,6 @@ from django.contrib.auth.views import (
 )
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout, authenticate
-from django.utils.decorators import method_decorator
-from django.shortcuts import resolve_url
 from django.urls import reverse_lazy
 
 from .models import User
@@ -91,7 +88,7 @@ class UserView(LoginRequiredMixin, TemplateView):
         return super().dispatch(*args, **kwargs)
 
 
-class UpdatePasswordView(LoginRequiredMixin,PasswordChangeView):
+class UpdatePasswordView(LoginRequiredMixin, PasswordChangeView):
     """パスワード更新ビュー"""
 
     template_name = "user/update/update_password.html"
@@ -112,7 +109,7 @@ class UpdatePasswordDoneView(PasswordChangeDoneView):
     template_name = "user/login.html"
 
 
-class UpdateProfileView(LoginRequiredMixin,UpdateView):
+class UpdateProfileView(LoginRequiredMixin, UpdateView):
     """ユーザープロフィール更新ビュー"""
 
     model = User
@@ -121,10 +118,21 @@ class UpdateProfileView(LoginRequiredMixin,UpdateView):
     success_url = reverse_lazy("user:user")
     success_message = "プロフィールが変更されました｡"
 
+    def get_object(self, queryset=None):
+        """ログイン中のユーザーオブジェクトを取得"""
+        return self.request.user
+
     def form_valid(self, form):
         messages.success(self.request, self.success_message)
         response = super().form_valid(form)
         return response
+
+    def form_invalid(self, form):
+        messages.error(
+            self.request,
+            "プロフィールの更新に失敗しました。入力内容を確認してください。",
+        )
+        return super().form_invalid(form)
 
 
 def page_not_found(request, exception):

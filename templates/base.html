@@ -69,7 +69,10 @@
           <ul class="navbar-nav">
             {% if user.is_authenticated %}
               <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">ようこそ、{{ user.name }}さん</a>
+                <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <img src="{{ user.avatar.url }}" alt="ユーザーアバター" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;" />
+                  ようこそ、{{ user.name }}さん
+                </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
                   <li><a class="dropdown-item" href="{% url 'user:user' %}">マイページ</a></li>
                   <!-- 跳转到プロフィールを変更する menu=settings时左侧菜单会变成设定栏 -->

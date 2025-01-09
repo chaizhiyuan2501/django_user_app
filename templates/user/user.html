@@ -3,4 +3,7 @@
 {% block content %}
 <h2>ユーザー名:{{ user.name }}</h2>
 <h2>メールアドレス:{{ user.email }}</h2>
+<h2>携帯番号:{{ user.phone_number }}</h2>
+<h2>アバター:</h2>
+<img src="{{ user.avatar.url }}" alt="Avatar">
 {% endblock %}
