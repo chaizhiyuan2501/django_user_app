@@ -20,6 +20,8 @@ class UpdateProfileFormTest(TestCase):
             email=self.email,
             password=self.password,
             name=self.name,
+            phone_number="123456789",
+            avatar="default/default_avatar.jpg",  # 使用默认头像
         )
 
     def test_avatar_upload_success(self):

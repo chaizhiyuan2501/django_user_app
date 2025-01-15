@@ -2,7 +2,12 @@ from django import forms
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from django.core import validators
+from django.core.exceptions import ValidationError
+from django.core.files.images import (
+    get_image_dimensions,
+)  # 開いているファイルまたはパスが指定されている場合、画像の (幅、高さ) を返します。
 from datetime import datetime
+
 from .models import User
 
 
@@ -83,10 +88,37 @@ class UpdateProfileForm(forms.ModelForm):
     )
 
     def save(self, *args, **kwargs):
-        user = super(UpdateProfileForm, self).save(commit=False)
+        user = self.instance
+        # 遍历表单中的清理后数据，仅更新非空字段
+        for field, value in self.cleaned_data.items():
+            if value:  # 跳过空字段
+                if field == "avatar":  # 对头像字段进行特殊处理
+                    width, height = get_image_dimensions(value)
+                    if width > 500 or height > 500:
+                        raise ValidationError(
+                            "アバター画像は500x500ピクセル以下である必要があります。"
+                        )
+                setattr(user, field, value)  # 动态更新字段
         user.update_date = datetime.now()
         user.save()
         return user
+
+    def clean_phone_number(self):
+        """
+        電話番号のバリデーションを行う
+        ー 入力された電話番号がすでに登録されたいるかを確認する
+        ー 登録済みの場合､ValidationErrorをスローする
+
+        Returns:
+            phone_number (str):バリデーションを通過した電話番号
+
+        Raises:
+            ValidationError:電話番号がすでに登録されたいる場合
+        """
+        phone_number = self.cleaned_data.get("phone_number")
+        if User.objects.filter(phone_number=phone_number).exists():
+            raise ValidationError("指定された電話番号は既に登録されています。")
+        return phone_number
 
     class Meta:
         model = User

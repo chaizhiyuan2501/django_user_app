@@ -86,9 +86,10 @@ class User(AbstractBaseUser, PermissionsMixin):
             models.UniqueConstraint(
                 fields=["phone_number"],
                 name="unique_phone_number",
-                condition=~Q(
-                    phone_number=None
-                ),  # 仅在 phone_number 不为空时应用唯一性约束
+                condition=(
+                    ~Q(phone_number=None)  # 仅在 phone_number 不为空时应用唯一性约束)
+                    & ~Q(phone_number="")
+                ),
             )
         ]
 

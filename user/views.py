@@ -127,12 +127,12 @@ class UpdateProfileView(LoginRequiredMixin, UpdateView):
         response = super().form_valid(form)
         return response
 
-    def form_invalid(self, form):
-        messages.error(
-            self.request,
-            "プロフィールの更新に失敗しました。入力内容を確認してください。",
-        )
-        return super().form_invalid(form)
+    # def form_invalid(self, form):
+    #     messages.error(
+    #         self.request,
+    #         "プロフィールの更新に失敗しました。入力内容を確認してください。",
+    #     )
+    #     return super().form_invalid(form)
 
 
 def page_not_found(request, exception):
