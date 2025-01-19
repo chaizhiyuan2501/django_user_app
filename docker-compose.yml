@@ -1,0 +1,29 @@
+﻿services:
+  # Djangoアプリケーション用のサービス
+  web:
+    build: .
+    container_name: django_user_app
+    command: python3 manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  # PostgreSQLデータベース用のサービス
+  db:
+    image: postgres:15
+    container_name: django_user_postgres_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: django_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+# データベースの永続ストレージ用ボリューム
+volumes:
+  postgres_data:
