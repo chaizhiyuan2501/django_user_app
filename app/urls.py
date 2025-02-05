@@ -16,8 +16,7 @@ from django.http import JsonResponse
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", include("user.urls")),
-    # path("todo/",include("todo.urls")),
+    path("", include("user.urls")),     #ユーザーURL
 ]
 
 if settings.DEBUG:
