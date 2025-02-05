@@ -9,9 +9,10 @@ from django.contrib.auth.views import (
     PasswordChangeView,
     PasswordChangeDoneView,
 )
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout, authenticate
 from django.urls import reverse_lazy
+from django.shortcuts import redirect
+
 
 from .models import User
 from .forms import (
@@ -123,9 +124,12 @@ class UpdateProfileView(LoginRequiredMixin, UpdateView):
         return self.request.user
 
     def form_valid(self, form):
+        if not any(form.cleaned_data.values()):
+            messages.warning(self.request, "更新する情報がありません。")
+            return redirect(self.request.path)
+
         messages.success(self.request, self.success_message)
-        response = super().form_valid(form)
-        return response
+        return super().form_valid(form)
 
     # def form_invalid(self, form):
     #     messages.error(

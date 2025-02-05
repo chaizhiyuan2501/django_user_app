@@ -3,57 +3,117 @@
 {% block title %}プロフィールの更新 | {{ APP_TITLE }}{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <h1 class="mb-4">プロフィールの更新</h1>
-
-    {# メッセージ表示部分 #}
-    {% if messages %}
-        <div class="alert-container mb-4">
-            {% for message in messages %}
-                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}" role="alert">
-                    {{ message.message }}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="border rounded p-4 bg-white shadow-sm">
+                <h2 class="h4 mb-3">プロフィール</h2>
+                <hr>
+                
+                {% if messages %}
+                <div class="alert-container mb-3">
+                    {% for message in messages %}
+                        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}" role="alert">
+                            {{ message.message }}
+                        </div>
+                    {% endfor %}
                 </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-
-    {# フォーム表示部分 #}
-    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
-        {% csrf_token %}
-
-        {# フィールドごとのエラー表示 #}
-        {% for field in form %}
-            <div class="mb-3">
-                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                {{ field }}
-                {% for error in field.errors %}
-                    <div class="text-danger small mt-1">{{ error }}</div>
-                {% endfor %}
+                {% endif %}
+                
+                <div class="row align-items-start">
+                    <!-- 左側プロフィールフォーム -->
+                    <div class="col-md-8">
+                        <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate onsubmit="return validateForm()">
+                            {% csrf_token %}
+                            
+                            {% for field in form %}
+                            {% if field.name != "avatar" %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label fw-bold">{{ field.label }}</label>
+                                <input type="{{ field.field.widget.input_type }}" name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control" value="{{ field.value|default_if_none:'' }}">
+                                <small class="form-text text-muted">{{ field.help_text }}</small>
+                                <div class="form-text text-danger">{{ field.errors }}</div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                            
+                            <div class="d-flex justify-content-start">
+                                <button type="submit" class="btn btn-primary">更新</button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- 右側アバターフォーム -->
+                    <div class="col-md-4 text-center">
+                        <h5 class="mb-3" id="avatar-title">現在のアバター</h5>
+                        <div class="avatar-preview mb-3 d-flex justify-content-center">
+                            <img id="avatar-preview" src="{% if user.avatar %}{{ user.avatar.url }}{% else %}/static/img/default-avatar.png{% endif %}" class="rounded-circle border" width="150" height="150">
+                        </div>
+                        <form method="post" enctype="multipart/form-data" class="text-center" id="avatar-form" onsubmit="return validateAvatarForm()">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <input type="file" name="avatar" id="id_avatar" class="form-control" accept="image/*" onchange="previewImage(event)">
+                                <div class="form-text text-danger">{{ form.avatar.errors }}</div>
+                            </div>
+                            <button type="submit" class="btn btn-outline-secondary btn-sm">アバターを更新する</button>
+                        </form>
+                    </div>
+                </div>
             </div>
-        {% endfor %}
-
-        <div class="d-grid">
-            <button type="submit" class="btn btn-primary">更新</button>
         </div>
-    </form>
+    </div>
 </div>
+
+<script>
+    function previewImage(event) {
+        const fileInput = event.target;
+        if (fileInput.files.length > 0) {
+            const reader = new FileReader();
+            reader.onload = function(){
+                const preview = document.getElementById("avatar-preview");
+                const title = document.getElementById("avatar-title");
+                preview.src = reader.result;
+                title.innerText = "新しいアバター"; // 画像が選択されたらタイトルを変更
+            }
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+    }
+    
+    function validateForm() {
+        let isValid = false;
+        document.querySelectorAll(".form-control").forEach(input => {
+            if (input.value.trim() !== "") {
+                isValid = true;
+            }
+        });
+        if (!isValid) {
+            alert("フォームが空です。更新する情報を入力してください。");
+        }
+        return isValid;
+    }
+    
+    function validateAvatarForm() {
+        const fileInput = document.getElementById("id_avatar");
+        if (fileInput.files.length === 0) {
+            alert("新しいアバターを選択してください。");
+            return false;
+        }
+        return true;
+    }
+</script>
 
 <style>
     .container {
-        max-width: 600px;
+        max-width: 900px;
     }
-
     .alert-container {
         padding: 10px;
     }
-
     .alert {
         margin-bottom: 10px;
     }
-
-    .error {
-        color: red;
-        font-size: 0.9em;
+    .avatar-preview img {
+        object-fit: cover;
     }
 </style>
 {% endblock %}
