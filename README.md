@@ -89,12 +89,12 @@ docker-compose exec web python manage.py createsuperuser
 ```bash
 docker-compose exec web python manage.py test
 ```
-### 5️⃣ **テスト用ユーザーを作成する**
+### 6️⃣ **テスト用ユーザーを作成する**
 ```bash
 docker-compose exec web python main.py
 ```
 
-### 6️⃣ **サーバーの起動**
+### 7️⃣ **サーバーの起動**
 コンテナはすでに起動しているので、以下の URL にアクセスしてください。
 ```
 http://127.0.0.1:8000/
