@@ -1,19 +1,12 @@
 from django import forms
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
-from django.core import validators
 from django.core.exceptions import ValidationError
-from django.core.files.images import (
-    get_image_dimensions,
-)  # 開いているファイルまたはパスが指定されている場合、画像の (幅、高さ) を返します。
+from django.core.files.images import get_image_dimensions
 from datetime import datetime
 
 from .models import User
-
-
-def check_password(password):
-    if not (8 <= len(password)):
-        raise validators.ValidationError("パスワードの長さは8桁以上入力してください｡")
+from .utils import check_password
 
 
 class UserRegisterForm(forms.ModelForm):
@@ -65,14 +58,27 @@ class UpdatePasswordForm(PasswordChangeForm):
         self.fields["new_password2"].label = "新しいパスワードを再入力してください"
 
     def clean_new_password1(self):
-        # 添加自定义密码验证逻辑
+        # カスタムのパスワード検証ロジックを追加
         new_password = self.cleaned_data.get("new_password1")
+
+        # パスワードの長さが8文字未満の場合、バリデーションエラーを発生させる
         if len(new_password) < 8:
-            raise forms.ValidationError("密码长度至少为8位!")
+            raise forms.ValidationError(
+                "パスワードの長さは少なくとも8文字以上である必要があります！"
+            )
+
+        # パスワードに少なくとも1つの数字が含まれていない場合、エラーを発生させる
         if not any(char.isdigit() for char in new_password):
-            raise forms.ValidationError("密码必须包含至少一个数字！")
+            raise forms.ValidationError(
+                "パスワードには少なくとも1つの数字を含める必要があります！"
+            )
+
+        # パスワードに少なくとも1つのアルファベットが含まれていない場合、エラーを発生させる
         if not any(char.isalpha() for char in new_password):
-            raise forms.ValidationError("密码必须包含至少一个字母！")
+            raise forms.ValidationError(
+                "パスワードには少なくとも1つの英字を含める必要があります！"
+            )
+
         return new_password
 
 
@@ -88,19 +94,24 @@ class UpdateProfileForm(forms.ModelForm):
     )
 
     def save(self, *args, **kwargs):
+        # ユーザーのプロフィール情報を保存するメソッド
         user = self.instance
-        # 遍历表单中的清理后数据，仅更新非空字段
+
+        # フォームのクリーニング後のデータを取得し、値があるフィールドのみ更新する
         for field, value in self.cleaned_data.items():
-            if value:  # 跳过空字段
-                if field == "avatar":  # 对头像字段进行特殊处理
+            if value:  # 空でない値のみ処理する
+                if field == "avatar":  # アバター画像の場合は特別な処理を行う
                     width, height = get_image_dimensions(value)
                     if width > 500 or height > 500:
                         raise ValidationError(
                             "アバター画像は500x500ピクセル以下である必要があります。"
                         )
-                setattr(user, field, value)  # 动态更新字段
+                # ユーザーオブジェクトの該当フィールドを更新
+                setattr(user, field, value)
+
         user.update_date = datetime.now()
         user.save()
+
         return user
 
     def clean_phone_number(self):

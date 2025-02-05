@@ -82,13 +82,14 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         verbose_name = "ユーザー"
+        # 携帯番号の一意性制約（NULLや空白を除く）
         constraints = [
             models.UniqueConstraint(
                 fields=["phone_number"],
                 name="unique_phone_number",
                 condition=(
-                    ~Q(phone_number=None)  # 仅在 phone_number 不为空时应用唯一性约束)
-                    & ~Q(phone_number="")
+                    ~Q(phone_number=None)  # phone_numberがNULLでない場合のみ適用
+                    & ~Q(phone_number="")  # 空文字列でない場合のみ適用
                 ),
             )
         ]
@@ -100,24 +101,26 @@ class User(AbstractBaseUser, PermissionsMixin):
 @receiver(pre_save, sender=User)
 def auto_delete_old_avatar(sender, instance, **kwargs):
     """
-    自动删除用户的旧头像。
+    ユーザーの古いアバター画像を自動的に削除する。
     """
-    if instance.pk:  # 确保实例已存在
+    if instance.pk:  # インスタンスが既に存在していることを確認
         try:
-            old_avatar = User.objects.get(pk=instance.pk).avatar
+            old_avatar = User.objects.get(pk=instance.pk).avatar  # 現在のアバターを取得
         except User.DoesNotExist:
-            return  # 用户不存在时不处理
+            return  # ユーザーが存在しない場合は処理を行わない
 
-        new_avatar = instance.avatar
+        new_avatar = instance.avatar  # 新しく設定されるアバター
+
+        # 古いアバターが存在し、新しいアバターと異なり、デフォルト画像でない場合
         if (
             old_avatar
             and old_avatar != new_avatar
             and old_avatar.name != "default/default_avatar.jpg"
         ):
-            old_avatar_path = old_avatar.path
-            if os.path.isfile(old_avatar_path):
+            old_avatar_path = old_avatar.path  # 古いアバターのファイルパスを取得
+            if os.path.isfile(old_avatar_path):  # ファイルが存在するか確認
                 try:
-                    os.remove(old_avatar_path)
-                    print(f"旧头像已删除: {old_avatar_path}")
+                    os.remove(old_avatar_path)  # 古いアバターを削除
+                    print(f"古いアバターを削除しました: {old_avatar_path}")
                 except Exception as e:
-                    print(f"删除旧头像失败: {e}")
+                    print(f"古いアバターの削除に失敗しました: {e}")
