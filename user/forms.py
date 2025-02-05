@@ -118,10 +118,10 @@ class UpdateProfileForm(forms.ModelForm):
         try:
             width, height = get_image_dimensions(avatar)
 
-            max_size = 500
+            max_size = 1000
             if width > max_size or height > max_size:
                 raise ValidationError(
-                    "アバター画像は500x500ピクセル以下である必要があります。"
+                    "アバター画像は1000x1000ピクセル以下である必要があります。"
                 )
 
         except Exception as e:

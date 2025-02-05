@@ -1,9 +1,30 @@
 {% extends "base.html" %}
 {% block title %}ユーザー情報 | {{ APP_TITLE }}{% endblock %}
 {% block content %}
-<h2>ユーザー名:{{ user.name }}</h2>
-<h2>メールアドレス:{{ user.email }}</h2>
-<h2>携帯番号:{{ user.phone_number }}</h2>
-<h2>アバター:</h2>
-<img src="{{ user.avatar.url }}" alt="Avatar">
+<div class="container py-5">
+    <div class="d-flex justify-content-center">
+        <div class="card shadow-lg" style="width: 350px; background-color: #ffffff; border-radius: 15px;">
+            <div class="card-body text-center">
+                <!-- アバター -->
+                <img src="{{ user.avatar.url }}" alt="Avatar" class="rounded-circle border mb-3" width="100" height="100">
+                <h4 class="fw-bold">ユーザー名:{{ user.name }}</h4>
+                <!-- メッセージボタン -->
+                <a href="{% url 'user:update_profile' user.pk %}" class="btn btn-primary w-100">プロフィールを変更する</a>
+                <hr>
+                <!-- ステータス情報 -->
+                <div class="text-start">
+                    <p class="mb-1"><span class="me-2">📧</span>メール <a href="mailto:{{ user.email }}" class="text-primary">{{ user.email }}</a></p>
+                    <p class="mb-1"><span class="me-2">📞</span>電話番号 <span class="text-muted">{{ user.phone_number }}</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .container {
+        background-color: #ffffff;
+        max-width: 1500px;
+    }
+</style>
 {% endblock %}

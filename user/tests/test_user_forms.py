@@ -60,8 +60,8 @@ class UpdateProfileFormTest(TestCase):
         self.assertEqual(user.phone_number, "1234567890")
 
     def test_avatar_upload_invalid_size(self):
-        """500x500を超えるアバター画像をアップロードした場合のテスト"""
-        image = get_test_image(size=(600, 600))  # サイズが大きすぎる画像
+        """1000*1000を超えるアバター画像をアップロードした場合のテスト"""
+        image = get_test_image(size=(1100, 1100))  # サイズが大きすぎる画像
 
         form_data = {"avatar": image}
         form = UpdateProfileForm(data={}, files=form_data)
@@ -71,7 +71,7 @@ class UpdateProfileFormTest(TestCase):
 
         # エラーメッセージの確認
         self.assertIn(
-            "アバター画像は500x500ピクセル以下である必要があります。",
+            "アバター画像は1000x1000ピクセル以下である必要があります。",
             form.errors["avatar"],
         )
 
