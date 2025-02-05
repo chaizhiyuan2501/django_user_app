@@ -93,42 +93,52 @@ class UpdateProfileForm(forms.ModelForm):
         widget=forms.ClearableFileInput(attrs={"class": "form-control"}),
     )
 
-    def save(self, *args, **kwargs):
-        # ユーザーのプロフィール情報を保存するメソッド
+    def save(self, commit=True):
+        """ユーザーのプロフィール情報を保存する"""
         user = self.instance
 
         # フォームのクリーニング後のデータを取得し、値があるフィールドのみ更新する
         for field, value in self.cleaned_data.items():
             if value:  # 空でない値のみ処理する
-                if field == "avatar":  # アバター画像の場合は特別な処理を行う
-                    width, height = get_image_dimensions(value)
-                    if width > 500 or height > 500:
-                        raise ValidationError(
-                            "アバター画像は500x500ピクセル以下である必要があります。"
-                        )
-                # ユーザーオブジェクトの該当フィールドを更新
                 setattr(user, field, value)
 
         user.update_date = datetime.now()
-        user.save()
+        if commit:
+            user.save()
 
         return user
+
+    def clean_avatar(self):
+        """アバター画像のサイズチェック"""
+        avatar = self.cleaned_data.get("avatar")
+
+        if not avatar:
+            return avatar
+
+        try:
+            width, height = get_image_dimensions(avatar)
+
+            max_size = 500
+            if width > max_size or height > max_size:
+                raise ValidationError(
+                    "アバター画像は500x500ピクセル以下である必要があります。"
+                )
+
+        except Exception as e:
+            raise ValidationError(e)
+
+        return avatar
 
     def clean_phone_number(self):
         """
         電話番号のバリデーションを行う
-        ー 入力された電話番号がすでに登録されたいるかを確認する
-        ー 登録済みの場合､ValidationErrorをスローする
-
-        Returns:
-            phone_number (str):バリデーションを通過した電話番号
-
-        Raises:
-            ValidationError:電話番号がすでに登録されたいる場合
         """
         phone_number = self.cleaned_data.get("phone_number")
-        if User.objects.filter(phone_number=phone_number).exists():
+
+        # 電話番号が重複かどうかをチェック
+        if phone_number and User.objects.filter(phone_number=phone_number).exists():
             raise ValidationError("指定された電話番号は既に登録されています。")
+
         return phone_number
 
     class Meta:

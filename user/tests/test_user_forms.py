@@ -1,14 +1,17 @@
+import os
 from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
-from user.models import User
 from user.forms import UpdateProfileForm
-from unittest.mock import patch
 from django.contrib.auth import get_user_model
-from user import forms
+from django.conf import settings
+
+from user.utils import get_test_image
+
 
 def create_user(**params):
     """新しいユーザーを作成する"""
     return get_user_model().objects.create_user(**params)
+
 
 class UpdateProfileFormTest(TestCase):
     def setUp(self):
@@ -23,24 +26,20 @@ class UpdateProfileFormTest(TestCase):
             phone_number="123456789",
             avatar="default/default_avatar.jpg",  # 使用默认头像
         )
+        # テスト用にアップロードしたファイル名を管理する
+        self.uploaded_files = []
 
-    def test_avatar_upload_success(self):
-        """アバター画像が正常にアップロードされることをテスト"""
+    def test_profile_upload_success(self):
+        """ユーザー情報が正常にアップロードされることをテスト"""
         # 画像ファイルをシミュレート
-        avatar = SimpleUploadedFile(
-            name="test_avatar.jpg",
-            content=b"fake_image_data",
-            content_type="image/jpeg"
-        )
+        avatar = get_test_image(size=(400, 400), name="test_avatar.jpg")
 
         # フォームデータを作成
         form_data = {
             "name": "New Name",
             "phone_number": "1234567890",
         }
-        form_files = {
-            "avatar": avatar
-        }
+        form_files = {"avatar": avatar}
 
         # フォームのインスタンスを作成
         form = UpdateProfileForm(data=form_data, files=form_files, instance=self.user)
@@ -51,39 +50,34 @@ class UpdateProfileFormTest(TestCase):
         # フォームを保存
         user = form.save()
 
-        # アップロードされたアバターが保存されていることを確認
-        self.assertTrue(user.avatar.url.endswith("test_avatar.jpg"))
+        # テストで生成されたファイルの名前を記録
+        self.uploaded_files.append(user.avatar.name)
+
+        # アップロードされたアバターが適切なディレクトリに保存されていることを確認
+        self.assertTrue(user.avatar.name.startswith("avatar/"))
+
         self.assertEqual(user.name, "New Name")
         self.assertEqual(user.phone_number, "1234567890")
 
     def test_avatar_upload_invalid_size(self):
-        """アバター画像が500x500ピクセルを超える場合、エラーを発生させることをテスト"""
-        # サイズの大きな画像ファイルをシミュレート（Fake Content）
-        avatar = SimpleUploadedFile(
-            name="large_avatar.jpg",
-            content=b"fake_large_image_data",
-            content_type="image/jpeg"
+        """500x500を超えるアバター画像をアップロードした場合のテスト"""
+        image = get_test_image(size=(600, 600))  # サイズが大きすぎる画像
+
+        form_data = {"avatar": image}
+        form = UpdateProfileForm(data={}, files=form_data)
+
+        self.assertFalse(form.is_valid())  # フォームが無効であることを確認
+        self.assertIn("avatar", form.errors)
+
+        # エラーメッセージの確認
+        self.assertIn(
+            "アバター画像は500x500ピクセル以下である必要があります。",
+            form.errors["avatar"],
         )
 
-        # モック get_image_dimensions を使用して画像のサイズをシミュレート
-        with self.settings(DEBUG=True), self.assertRaises(forms.ValidationError):
-            with patch("user.forms.get_image_dimensions") as mock_get_image_dimensions:
-                mock_get_image_dimensions.return_value = (600, 600)  # 超過サイズを設定
-
-                # フォームデータを作成
-                form_data = {
-                    "name": "New Name",
-                    "phone_number": "1234567890",
-                }
-                form_files = {
-                    "avatar": avatar
-                }
-
-                # フォームのインスタンスを作成
-                form = UpdateProfileForm(data=form_data, files=form_files, instance=self.user)
-
-                # フォームのバリデーション
-                self.assertFalse(form.is_valid())
-
-                # エラーメッセージを確認
-                self.assertIn("アバター画像は500x500ピクセル以下である必要があります。", form.errors["avatar"])
+    def tearDown(self):
+        """テスト終了後にテストで作成した画像のみ削除"""
+        for file_name in self.uploaded_files:
+            file_path = os.path.join(settings.MEDIA_ROOT, file_name)
+            if os.path.exists(file_path):
+                os.remove(file_path)

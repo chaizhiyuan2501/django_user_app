@@ -1,7 +1,11 @@
 import uuid
 import os
+import io
+from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
 
 from django.core import validators
+
 
 class GetImagePath:
     """カスタマイズされた画像パスを取得します。
@@ -20,9 +24,6 @@ class GetImagePath:
         return self.prefix + name + extension
 
     def deconstruct(self):
-        """
-        Django にこのオブジェクトをどのようにシリアライズするかを伝えます。
-        """
         return (
             "user.utils.GetImagePath",  # クラスの完全パス
             [],  # 位置引数なし
@@ -32,7 +33,16 @@ class GetImagePath:
 
 def check_password(password):
     # パスワードの長さをチェックする関数
-    
+
     # パスワードが8文字以上でない場合、バリデーションエラーを発生させる
     if not (8 <= len(password)):
         raise validators.ValidationError("パスワードの長さは8桁以上入力してください｡")
+
+
+def get_test_image(size=(400, 400), name="test_avatar.jpg", format="JPEG"):
+    """指定サイズのテスト用画像を作成"""
+    img = Image.new("RGB", size, (255, 0, 0))  # 赤色の画像
+    img_io = io.BytesIO()
+    img.save(img_io, format=format)
+    img_io.seek(0)
+    return SimpleUploadedFile(name, img_io.getvalue(), content_type="image/jpeg")

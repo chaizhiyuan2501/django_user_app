@@ -64,7 +64,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=50,
         null=True,
         blank=True,
-        default=None,
+        default="",
         verbose_name="携帯番号",
     )
     is_active = models.BooleanField(default=True)
