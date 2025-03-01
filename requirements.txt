@@ -1,5 +1,6 @@
-Django>=4.0,<5.0
-django-bootstrap5>=22.0,<23.0
-Pillow
-psycopg2-binary
-uuid
+Django>=4.0,<5.0  # Django 版本要求：至少 4.0，小于 5.0
+django-bootstrap5>=22.0,<23.0  # Django Bootstrap 5 支持库（版本 22.x）
+argon2-cffi  # Argon2 密码哈希算法（用于安全存储用户密码）
+Pillow  # 处理图像文件的 Python 库（Django 需要它来处理图片）
+psycopg2-binary  # PostgreSQL 数据库驱动（用于 Django 连接 PostgreSQL）
+uuid  # 用于生成唯一标识符（UUID）

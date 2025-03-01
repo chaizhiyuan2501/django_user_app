@@ -81,13 +81,13 @@ WSGI_APPLICATION = "app.wsgi.application"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'django_db',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'db',
-        'PORT': '5432',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "django_db",
+        "USER": "postgres",
+        "PASSWORD": "postgres",
+        "HOST": "db",
+        "PORT": "5432",
     }
 }
 
@@ -95,18 +95,37 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
+# Django のパスワードハッシュ化とバリデーション設定
+
+# パスワードのハッシュ化設定（上から順番に試行される）
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.Argon2PasswordHasher",  # 最も強力なハッシュ化アルゴリズム（ライブラリのインストールが必要）
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",  # 安全性の高いハッシュアルゴリズム
+    "django.contrib.auth.hashers.BCryptPasswordHasher",  # BCrypt の SHA256 なしバージョン
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",  # Django のデフォルトのハッシュアルゴリズム（比較的安全）
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",  # SHA1 を使用した PBKDF2（非推奨）
+]
+
+# パスワードのバリデーションルール設定
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        # ユーザー名やメールアドレスと類似したパスワードの使用を禁止
+        # 例: ユーザー名が "tom" の場合、"tom123" のようなパスワードは不可
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {
+            "min_length": 8,  # パスワードの最低文字数を 8 に設定（8 文字以上でなければならない）
+        },
     },
     {
         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+        # 一般的に使われるパスワード（例: "12345678", "password"）の使用を禁止
     },
     {
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+        # 数字のみのパスワードの使用を禁止（例: "12345678" は不可）
     },
 ]
 
@@ -126,7 +145,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL ="/static/"
+STATIC_URL = "/static/"
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
 MEDIA_URL = "/media/"
