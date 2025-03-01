@@ -77,6 +77,9 @@ docker-compose up --build
 
 ### 3️⃣ **データベースのマイグレーション**
 ```bash
+docker-compose exec web python manage.py makemigrations
+```
+```bash
 docker-compose exec web python manage.py migrate
 ```
 

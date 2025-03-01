@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django_bootstrap5",
     "user",
+    "todo",
 ]
 
 MIDDLEWARE = [
@@ -161,3 +162,6 @@ MESSAGE_TAGS = {
     message_constants.WARNING: "warning",
     message_constants.ERROR: "danger",
 }
+
+# セッション保存時間
+SESSION_COOKIE_AGE = 60 * 60

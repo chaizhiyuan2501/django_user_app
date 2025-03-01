@@ -9,7 +9,7 @@
             <div class="border rounded p-4 bg-white shadow-sm">
                 <h2 class="h4 mb-3">プロフィール</h2>
                 <hr>
-                
+
                 {% if messages %}
                 <div class="alert-container mb-3">
                     {% for message in messages %}
@@ -19,13 +19,13 @@
                     {% endfor %}
                 </div>
                 {% endif %}
-                
-                <div class="row align-items-start">
-                    <!-- 左側プロフィールフォーム -->
-                    <div class="col-md-8">
-                        <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate onsubmit="return validateForm()">
-                            {% csrf_token %}
-                            
+
+                <!-- プロフィールフォーム（アバターも含める） -->
+                <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate onsubmit="return validateForm()">
+                    {% csrf_token %}
+                    <div class="row">
+                        <!-- 左側（プロフィール情報） -->
+                        <div class="col-md-8">
                             {% for field in form %}
                             {% if field.name != "avatar" %}
                             <div class="mb-3">
@@ -36,29 +36,25 @@
                             </div>
                             {% endif %}
                             {% endfor %}
-                            
-                            <div class="d-flex justify-content-start">
-                                <button type="submit" class="btn btn-primary">更新</button>
-                            </div>
-                        </form>
-                    </div>
-                    
-                    <!-- 右側アバターフォーム -->
-                    <div class="col-md-4 text-center">
-                        <h5 class="mb-3" id="avatar-title">現在のアバター</h5>
-                        <div class="avatar-preview mb-3 d-flex justify-content-center">
-                            <img id="avatar-preview" src="{% if user.avatar %}{{ user.avatar.url }}{% else %}/static/img/default-avatar.png{% endif %}" class="rounded-circle border" width="150" height="150">
                         </div>
-                        <form method="post" enctype="multipart/form-data" class="text-center" id="avatar-form" onsubmit="return validateAvatarForm()">
-                            {% csrf_token %}
+
+                        <!-- 右側（アバター） -->
+                        <div class="col-md-4 text-center">
+                            <h5 class="mb-3">現在のアバター</h5>
+                            <div class="avatar-preview mb-3 d-flex justify-content-center">
+                                <img id="avatar-preview" src="{% if user.avatar %}{{ user.avatar.url }}{% else %}/static/img/default-avatar.png{% endif %}" class="rounded-circle border" width="150" height="150">
+                            </div>
                             <div class="mb-3">
                                 <input type="file" name="avatar" id="id_avatar" class="form-control" accept="image/*" onchange="previewImage(event)">
                                 <div class="form-text text-danger">{{ form.avatar.errors }}</div>
                             </div>
-                            <button type="submit" class="btn btn-primary">アバター更新</button>
-                        </form>
+                        </div>
+                    </div> <!-- /row -->
+
+                    <div class="d-flex justify-content-start">
+                        <button type="submit" class="btn btn-primary">更新</button>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
     </div>
@@ -70,10 +66,7 @@
         if (fileInput.files.length > 0) {
             const reader = new FileReader();
             reader.onload = function(){
-                const preview = document.getElementById("avatar-preview");
-                const title = document.getElementById("avatar-title");
-                preview.src = reader.result;
-                title.innerText = "新しいアバター"; // 画像が選択されたらタイトルを変更
+                document.getElementById("avatar-preview").src = reader.result;
             }
             reader.readAsDataURL(fileInput.files[0]);
         }
@@ -91,21 +84,12 @@
         }
         return isValid;
     }
-    
-    function validateAvatarForm() {
-        const fileInput = document.getElementById("id_avatar");
-        if (fileInput.files.length === 0) {
-            alert("新しいアバターを選択してください。");
-            return false;
-        }
-        return true;
-    }
 </script>
 
 <style>
     .container {
-    max-width: 1200px;
-    padding-left: 200px;
+        max-width: 1200px;
+        padding-left: 200px;
     }
     .alert-container {
         padding: 10px;

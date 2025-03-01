@@ -10,7 +10,20 @@
         <h1 class="fw-bold mt-3">ユーザー管理サイト</h1>
         <p class="text-muted">シンプルで直感的なユーザー管理を提供します。</p>
     </div>
-    
+    {% if user.is_authenticated %}
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm bg-light border-0">
+                <div class="card-body text-center py-4">
+                    <!-- ユーザー名を表示 -->
+                    <h3 class="mb-3 text-primary fw-bold">ようこそ!</h3>
+                    <h4 class="mb-3 text-dark">ユーザー管理サイトへ!</h4>
+                    <p class="fs-5 text-secondary"><strong class="text-dark">{{ user.name }} さん!</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
     <!-- 機能の紹介カード -->
     <div class="row justify-content-center">
         <div class="col-md-4">
@@ -33,4 +46,5 @@
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}

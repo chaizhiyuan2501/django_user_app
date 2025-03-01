@@ -45,7 +45,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     name = models.CharField(
         max_length=50,
-        unique=True,
+        unique=False,
         verbose_name="ユーザー名",
     )
     email = models.EmailField(
@@ -83,16 +83,16 @@ class User(AbstractBaseUser, PermissionsMixin):
     class Meta:
         verbose_name = "ユーザー"
         # 携帯番号の一意性制約（NULLや空白を除く）
-        constraints = [
-            models.UniqueConstraint(
-                fields=["phone_number"],
-                name="unique_phone_number",
-                condition=(
-                    ~Q(phone_number=None)  # phone_numberがNULLでない場合のみ適用
-                    & ~Q(phone_number="")  # 空文字列でない場合のみ適用
-                ),
-            )
-        ]
+        # constraints = [
+        #     models.UniqueConstraint(
+        #         fields=["phone_number"],
+        #         name="unique_phone_number",
+        #         condition=(
+        #             ~Q(phone_number=None)  # phone_numberがNULLでない場合のみ適用
+        #             & ~Q(phone_number="")  # 空文字列でない場合のみ適用
+        #         ),
+        #     )
+        # ]
 
     def __str__(self):
         return self.name

@@ -31,7 +31,7 @@ class PublicUserApiTests(TestCase):
     """ユーザー API の公開機能をテストします。"""
 
     def test_create_user_successful(self):
-        """ユーザーを作成し､ホームページに遷移が成功したかテストする"""
+        """ユーザーを作成し､ユーザーページに遷移が成功したかテストする"""
         # ユーザー作成するための仮パラメータ
         params = {
             "name": "TestUser",
@@ -41,7 +41,7 @@ class PublicUserApiTests(TestCase):
         # ユーザー登録ページをポストし､ユーザーを作成する
         response = self.client.post(CREATE_USER_URL, params)
         # ユーザーを作成し､ホームページに遷移できるかをテストする
-        self.assertRedirects(response, reverse_lazy("user:home"))
+        self.assertRedirects(response, reverse_lazy("user:user"))
         # 作成したユーザーの情報は情報のと一致しているかテストする
         user = get_user_model().objects.get(email=params["email"])
         self.assertTrue(user.name, params["name"])

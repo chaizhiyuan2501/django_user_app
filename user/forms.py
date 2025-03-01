@@ -97,12 +97,16 @@ class UpdateProfileForm(forms.ModelForm):
         """ユーザーのプロフィール情報を保存する"""
         user = self.instance
 
-        # フォームのクリーニング後のデータを取得し、値があるフィールドのみ更新する
+        # # name が空白なら保存しない
+        # if not self.cleaned_data.get("name", "").strip():
+        #     raise ValidationError("ユーザー名は空にできません。")
+
         for field, value in self.cleaned_data.items():
-            if value:  # 空でない値のみ処理する
+            if value:
                 setattr(user, field, value)
 
         user.update_date = datetime.now()
+
         if commit:
             user.save()
 
@@ -129,17 +133,17 @@ class UpdateProfileForm(forms.ModelForm):
 
         return avatar
 
-    def clean_phone_number(self):
-        """
-        電話番号のバリデーションを行う
-        """
-        phone_number = self.cleaned_data.get("phone_number")
+    # def clean_phone_number(self):
+    #     """
+    #     電話番号のバリデーションを行う
+    #     """
+    #     phone_number = self.cleaned_data.get("phone_number")
 
-        # 電話番号が重複かどうかをチェック
-        if phone_number and User.objects.filter(phone_number=phone_number).exists():
-            raise ValidationError("指定された電話番号は既に登録されています。")
+    #     # 電話番号が重複かどうかをチェック
+    #     if phone_number and User.objects.filter(phone_number=phone_number).exists():
+    #         raise ValidationError("指定された電話番号は既に登録されています。")
 
-        return phone_number
+    #     return phone_number
 
     class Meta:
         model = User

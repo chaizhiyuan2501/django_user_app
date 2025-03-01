@@ -32,7 +32,7 @@ class UserRegisterView(CreateView):
 
     template_name = "user/register.html"
     form_class = UserRegisterForm
-    success_url = reverse_lazy("user:home")
+    success_url = reverse_lazy("user:user")
     success_message = "ユーザー登録成功しました｡"  # 登録成功メッセージ
 
     def form_valid(self, form):
