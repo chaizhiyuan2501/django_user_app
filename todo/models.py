@@ -12,7 +12,7 @@ class Todo(BaseModel):
     title = models.CharField(max_length=150, verbose_name="タイトル")
     description = models.CharField(max_length=255,blank=True, null=True, verbose_name="詳細")
     registration_date = models.DateField(blank=True, null=True, verbose_name="登録日")
-    expire_date = models.DateField(blank=True, null=True, verbose_name="有効期限")
+    expire_date = models.DateField(blank=True, null=True, verbose_name="期限日")
     finished_date = models.DateField(blank=True, null=True, verbose_name="終了日")
     is_completed = models.BooleanField(default=False, verbose_name="達成フラグ")
 
