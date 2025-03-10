@@ -21,6 +21,30 @@ class UserRegisterForm(forms.ModelForm):
         validators=[check_password],
     )
 
+    def clean_email(self):
+        """メールアドレスのバリデーション（重複チェック）"""
+        email = self.cleaned_data.get("email")
+        if User.objects.filter(email=email).exists():
+            raise ValidationError("このメールアドレスはすでに登録されています。")
+        return email
+
+    def clean_password(self):
+        """パスワードのバリデーション"""
+        password = self.cleaned_data.get("password")
+        validate_password(password)  # Django のパスワードバリデーション
+        return password
+
+    def clean(self):
+        """パスワード確認フィールドのバリデーション"""
+        cleaned_data = super().clean()
+        password = cleaned_data.get("password")
+        password_confirm = cleaned_data.get("password_confirm")
+
+        if password and password_confirm and password != password_confirm:
+            self.add_error("password_confirm", "パスワードが一致しません。")
+
+        return cleaned_data
+
     def save(self, commit=False):
         user = super().save(commit=False)
         user.create_date = datetime.now()
@@ -44,6 +68,12 @@ class UserLoginForm(AuthenticationForm):
     )
 
 
+    def clean_username(self):
+        """メールアドレスのバリデーション"""
+        email = self.cleaned_data.get("username")
+        if not User.objects.filter(email=email).exists():
+            raise forms.ValidationError("このメールアドレスは登録されていません。")
+        return email
 class UpdatePasswordForm(PasswordChangeForm):
     """パスワード更新フォーム"""
 
