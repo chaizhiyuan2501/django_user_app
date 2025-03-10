@@ -9,8 +9,8 @@ class Todo(BaseModel):
     """Todoモデル"""
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    title = models.CharField(max_length=150, verbose_name="タイトル")
-    description = models.CharField(max_length=255,blank=True, null=True, verbose_name="詳細")
+    title = models.CharField(max_length=50, verbose_name="タイトル")
+    description = models.CharField(max_length=300,blank=True, null=True, verbose_name="詳細")
     registration_date = models.DateField(blank=True, null=True, verbose_name="登録日")
     expire_date = models.DateField(blank=True, null=True, verbose_name="期限日")
     finished_date = models.DateField(blank=True, null=True, verbose_name="終了日")
